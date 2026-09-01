@@ -128,3 +128,23 @@ keep this doc scannable; run the script for the authoritative list against your 
   in the MachineLearningCSV variant — nothing to drop there
 - Outputs: `data/processed/train.csv`, `data/processed/test.csv`,
   `data/processed/label_mapping.json`
+
+## Baseline model results (Day 4)
+
+Gaussian Naive Bayes, all 78 features, no feature selection:
+
+- **Accuracy: 0.1430** — worse than the 0.803 majority-class (all-BENIGN) baseline
+- **Macro F1: 0.1956** (Precision 0.24 / Recall 0.62)
+- **BENIGN recall: 0.05** — the model misclassifies ~95% of normal traffic as an
+  attack, dragging down precision across most attack classes
+- Root cause: GaussianNB assumes per-class Gaussian feature distributions; BENIGN
+  is a broad, heterogeneous mix of legitimate traffic types with wide/multi-modal
+  distributions, which lose out to attack classes' narrower, more repetitive
+  traffic patterns under NB's independence + normality assumptions
+- **This result motivates the project's core design**: ACO feature selection
+  (Week 2) is expected to substantially outperform this full-feature baseline by
+  removing noisy/uninformative dimensions that worsen NB's distributional
+  assumptions; fuzzy risk scoring is motivated by exactly this kind of
+  low-confidence, easily-confused binary-ish output.
+- Full metrics, confusion matrix, and per-class breakdown saved in
+  `reports/baseline_results.json`
