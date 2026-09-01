@@ -1,0 +1,29 @@
+﻿# --- Core ML ---
+numpy
+pandas
+scipy
+scikit-learn
+
+# --- Fuzzy logic ---
+scikit-fuzzy
+networkx  # scikit-fuzzy dependency
+
+# --- MLOps ---
+mlflow
+
+# --- Backend / API ---
+fastapi
+uvicorn[standard]
+pydantic
+
+# --- AI / MCP ---
+mcp
+anthropic
+
+# --- Viz (EDA + evaluation plots) ---
+matplotlib
+seaborn
+
+# --- Utilities ---
+joblib
+python-dotenv

@@ -1,0 +1,43 @@
+[project]
+name = "sentinelml"
+version = "0.1.0"
+description = "AI-powered network intrusion risk scoring platform (ACO + Gaussian NB + fuzzy inference)"
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "MIT" }
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.venv
+  | mlruns
+  | mlartifacts
+  | data
+  | models
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [".venv", "mlruns", "mlartifacts", "data", "models"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]  # line length handled by black
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "ml", "fuzzy", "api", "mcp"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
