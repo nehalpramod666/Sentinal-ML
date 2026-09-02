@@ -148,3 +148,34 @@ Gaussian Naive Bayes, all 78 features, no feature selection:
   low-confidence, easily-confused binary-ish output.
 - Full metrics, confusion matrix, and per-class breakdown saved in
   `reports/baseline_results.json`
+## Preprocessing fix (Day 4 follow-up): duplicate column and impossible values
+
+Feature-scale investigation (post Day-4 baseline) surfaced two data quality issues:
+
+- **Duplicate column**: `Fwd Header Length` appeared twice in the raw CSVs
+  (pandas auto-renamed the second occurrence to `Fwd Header Length.1` on load).
+  Verified identical across all rows — dropped the duplicate. Features: 78 -> 77.
+- **Impossible negative values**: 150 rows (0.005% of the combined dataset) had
+  physically impossible negative values in `Flow Duration`, `Flow Bytes/s`, or
+  `Fwd Header Length` (e.g. `Fwd Header Length` as low as -3.22e10) — a known
+  CICFlowMeter generation artifact (likely integer underflow), not a
+  preprocessing bug. Dropped these rows.
+
+`ml/preprocessing.py` updated with `drop_duplicate_columns()` and
+`drop_impossible_values()`; train/test regenerated (2,262,180 / 565,546 rows).
+
+### Re-run baseline (Day 4, corrected data)
+
+| Metric | Before fix | After fix |
+|---|---:|---:|
+| Accuracy | 0.1430 | 0.1635 |
+| BENIGN recall | 0.05 | 0.08 |
+| Macro F1 | 0.1956 | 0.1977 |
+| Weighted F1 | 0.1679 | 0.2068 |
+
+**Conclusion**: the fix produced a small, real improvement, but the core failure
+mode is unchanged — BENIGN recall remains far below its 80% class share, still
+worse than a majority-class baseline. This confirms the earlier hypothesis: the
+problem is GaussianNB's Gaussian/independence assumptions breaking down on
+BENIGN's broad, heterogeneous traffic distribution, not data corruption. Data
+cleanliness was a contributing factor at the margin, not the root cause.
