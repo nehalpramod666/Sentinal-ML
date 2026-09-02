@@ -179,3 +179,42 @@ worse than a majority-class baseline. This confirms the earlier hypothesis: the
 problem is GaussianNB's Gaussian/independence assumptions breaking down on
 BENIGN's broad, heterogeneous traffic distribution, not data corruption. Data
 cleanliness was a contributing factor at the margin, not the root cause.
+## EDA findings (Day 5)
+
+Plots generated: `reports/plots/class_distribution.png`,
+`feature_histograms.png`, `correlation_heatmap.png` (top 20 features by variance).
+
+### Class imbalance
+Visually confirms the Day 2 label counts — BENIGN dominates at 80.3%, with a
+long tail of attack classes spanning 4 orders of magnitude down to single-digit
+sample counts (Heartbleed, Infiltration). Log-scale y-axis was necessary; a
+linear scale makes every class but BENIGN and DoS Hulk invisible.
+
+### Feature redundancy (correlation heatmap, top 20 by variance)
+
+22 feature pairs found with |r| > 0.9 among the top-variance features, clustering
+into one dominant redundant group — all timing/duration-related:
+
+- `Flow Duration` <-> `Fwd IAT Total`: r = 0.999 (near-identical)
+- A tightly interlinked cluster: `Fwd IAT Max`, `Flow IAT Max`, `Idle Max`,
+  `Idle Mean`, `Idle Min`, `Fwd IAT Std`, `Flow IAT Std` — all pairwise r > 0.9
+- `Bwd IAT Mean` <-> `Bwd IAT Min`: r = 0.933
+
+**Implication for Day 6-9**: this is direct empirical evidence that the raw
+78/77-feature space contains substantial redundancy concentrated in
+timing-based features. Expect Mutual Information ranking and ACO feature
+selection to both down-weight or drop several of these in favor of one
+representative timing feature, rather than needing near-identical duplicates.
+
+### BENIGN vs. Attack distribution overlap
+
+Histograms of 12 representative features (packet stats, timing, rate, flags),
+clipped to 1st-99th percentile, show substantial distributional overlap between
+BENIGN and Attack traffic on most individual features — consistent with the
+Day 4 baseline finding that no single feature (and apparently not the full
+linear combination GaussianNB assumes) cleanly separates the two classes.
+This is the visual counterpart to the low BENIGN recall (0.08) seen in the
+baseline: BENIGN's distribution is broad and overlaps heavily with several
+attack types' distributions on individual features, requiring either feature
+selection to isolate more separable dimensions (ACO) or a model that doesn't
+assume Gaussian per-feature independence.
