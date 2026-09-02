@@ -218,3 +218,44 @@ baseline: BENIGN's distribution is broad and overlaps heavily with several
 attack types' distributions on individual features, requiring either feature
 selection to isolate more separable dimensions (ACO) or a model that doesn't
 assume Gaussian per-feature independence.
+## Mutual Information ranking (Day 6)
+
+Computed via `mutual_info_classif` (KNN-based estimator) on the full training
+set (2,262,180 rows x 77 features). **Runtime: ~15-20 minutes** — full ranking
+kept as this run's canonical result since it already completed, but going
+forward (ACO tuning, Day 7-9) MI/heuristic computations will use a stratified
+100,000-row subsample for practicality; full-dataset ranking is not required
+again since Day 6's results already establish the reference ranking.
+
+### Top 5 features by MI
+| Rank | Feature | MI Score |
+|---|---|---:|
+| 1 | Average Packet Size | 0.5887 |
+| 2 | Packet Length Mean | 0.5609 |
+| 3 | Packet Length Std | 0.5580 |
+| 4 | Packet Length Variance | 0.5570 |
+| 5 | Subflow Bwd Bytes | 0.4986 |
+
+Packet-size statistics dominate the top of the ranking, suggesting attack
+traffic in this dataset is more distinguishable by packet size patterns than
+by timing patterns — despite timing features (Flow Duration, IAT) having the
+highest raw variance (see Day 5 EDA). Variance and MI are measuring different
+things: MI is target-aware, variance is not. This is a useful contrast to
+highlight in the final write-up.
+
+### Zero/near-zero MI features — dead or near-dead columns
+
+Five features are **exactly constant** (single unique value, 0) across all
+2,262,180 rows: `Bwd PSH Flags`, `Bwd Avg Bulk Rate`, `Bwd Avg Bytes/Bulk`,
+`Fwd Avg Bulk Rate`, `Fwd Avg Packets/Bulk`. Root cause: CICFlowMeter's "bulk
+transfer" and backward-PSH metrics essentially never populate for this
+dataset's traffic patterns. These carry zero information and are guaranteed
+candidates for ACO to deselect — worth flagging explicitly rather than
+silently letting ACO discover it, since it validates the algorithm is working
+as expected if these end up excluded from every ant's selected subset.
+
+Two more (`RST Flag Count`, `CWE Flag Count`) are non-constant but extremely
+rare (<0.03% of rows non-zero), rounding to ~0 MI. Kept in the feature set —
+borderline, low information, but not literally constant.
+
+Full ranking: `reports/feature_scores.csv`.
