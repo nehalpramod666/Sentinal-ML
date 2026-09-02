@@ -23,9 +23,6 @@ models/*
 !data/processed/.gitkeep
 !models/.gitkeep
 
-# Reports
-reports/plots/*
-!reports/plots/.gitkeep
 
 # IDE
 .vscode/
