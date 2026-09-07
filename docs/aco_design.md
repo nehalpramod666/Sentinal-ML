@@ -165,3 +165,36 @@ experimentally tuning these and logging results.
 - Logging of best subset, best fitness, and pheromone values per iteration
   (needed for Day 13's "Feature Selection Evolution" and "Pheromone Heatmap"
   visualizations from the original project brief)
+## Implementation notes (Day 8)
+
+Implemented in `ml/aco.py` per this design. One bug found and fixed during
+initial runs:
+
+**Pheromone saturation bug**: the initial `update_pheromone` implementation
+deposited `Q * fitness` per ant that selected a feature, without normalizing
+by ant count. With 20 ants and even moderate agreement on a feature, this
+caused pheromone to hit `tau_max` within 1-2 iterations regardless of true
+feature quality, collapsing the search (avg subset size ballooned from 30 to
+consistently 55-58 features, and iteration-2-onward fitness dropped ~25%
+below iteration 1 and never recovered — evidence the search had effectively
+stopped discriminating between features). Fixed by dividing the deposit by
+`n_ants`, matching standard ACO practice where deposit magnitude should
+reflect average solution quality, not raw agreement count.
+
+**Post-fix results** (20 ants, 30 iterations, alpha=1.0, beta=2.0, rho=0.2):
+- Best subset: 30/77 features, fitness 0.3073 (macro F1 0.2316)
+- Final pheromone distribution: mean 0.512, with 38 features >0.9 and 36
+  features <0.1 — a bimodal, polarized distribution consistent with genuine
+  convergence on a binary selection problem (clear "keep" vs. "drop" groups),
+  not a saturation artifact (compare: pre-fix mean was 0.761 with 77% of
+  features pinned at the ceiling)
+- Average fitness per iteration rose from 0.2692 (iter 1) to ~0.277-0.278
+  (iters 20-30), showing the search population improving over time
+- **Open question for Day 9**: the single best-ever fitness (0.3073) was set
+  at iteration 1 and never exceeded, even as the average improved. Plausible
+  explanation: iteration 1's ants draw mostly from the MI heuristic (tau
+  starts uniform at 0.5), which may already be a strong starting point;
+  pheromone-guided search over 30 iterations improved the population's
+  average without yet finding a single ant that beats that early result.
+  Day 9 will test whether more iterations, higher alpha (more pheromone
+  influence), or different beta values close this gap.
