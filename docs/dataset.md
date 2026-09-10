@@ -259,3 +259,48 @@ rare (<0.03% of rows non-zero), rounding to ~0 MI. Kept in the feature set —
 borderline, low information, but not literally constant.
 
 Full ranking: `reports/feature_scores.csv`.
+
+## ACO-selected model vs. full-feature baseline (Day 10)
+
+GaussianNB trained on ACO's 35-feature subset (Day 9, tuned), evaluated on
+the same held-out test set as the Day 4 baseline. Full results:
+`reports/aco_model_results.json`.
+
+| Metric | Baseline (77 features) | ACO-selected (35 features) | Delta |
+|---|---:|---:|---:|
+| Accuracy | 0.1635 | 0.1845 | +0.0210 |
+| Precision (macro) | 0.2593 | 0.2747 | +0.0154 |
+| Recall (macro) | 0.5220 | 0.4903 | -0.0317 |
+| F1 (macro) | 0.1977 | 0.2095 | +0.0118 |
+| F1 (weighted) | 0.2068 | 0.2305 | +0.0237 |
+| Train time | 5.19s | 1.69s | -67.4% |
+| Inference time | 5.48s | 2.46s | -55.2% |
+| ROC AUC (macro, OvR) | not computed | 0.8896 | — |
+
+**Efficiency gains are strong and unambiguous**: 3.1x faster training, 2.2x
+faster inference, using 45% of the original features (35/77) — directly
+validating the project's stated objectives of reduced training time and
+improved inference efficiency. ROC AUC of 0.8896 is a strong absolute score,
+indicating the model's predicted class probabilities do rank true classes
+well even where its hard classification decisions (argmax) do not.
+
+**Quality metrics improved modestly but genuinely**: accuracy, macro
+precision, macro F1, and weighted F1 all increased. However, **macro recall
+decreased** (0.522 -> 0.490), and critically, **BENIGN recall remains
+severely impaired** (0.08 baseline -> 0.09 ACO-selected) — the model still
+misclassifies over 90% of legitimate traffic as some attack type either way.
+
+**Interpretation**: ACO feature selection successfully addressed the
+project's efficiency goals and produced small, consistent quality gains, but
+did **not** resolve GaussianNB's core failure mode. This is expected, not a
+flaw in the ACO implementation: the underlying issue (Day 4) is that
+GaussianNB's per-class Gaussian/independence assumptions break down on
+BENIGN's broad, heterogeneous traffic distribution — a *model* limitation
+that persists regardless of which feature subset is used, since no subset
+of the original 77 features changes what BENIGN traffic actually looks like
+statistically. This result is the direct empirical justification for the
+project's fuzzy risk-scoring layer (Week 2 remainder): rather than relying
+on a single classifier's unreliable hard decision boundary, converting
+prediction probabilities into graded risk levels (Low/Medium/High/Critical)
+provides a more honest and actionable signal precisely in the regime where
+GaussianNB's binary-ish classification is this unreliable.
