@@ -198,3 +198,62 @@ reflect average solution quality, not raw agreement count.
   average without yet finding a single ant that beats that early result.
   Day 9 will test whether more iterations, higher alpha (more pheromone
   influence), or different beta values close this gap.
+
+## Hyperparameter tuning (Day 9)
+
+Ran 7 configurations on a 100,000-row stratified tuning sample (faster than
+the 1,000,000-row canonical sample), varying one parameter at a time from
+the Day 8 baseline (n_ants=20, n_iterations=30, alpha=1.0, beta=2.0, rho=0.2).
+Full results: `reports/aco_tuning_experiments.csv`.
+
+| Experiment | n_ants | n_iter | alpha | beta | rho | Fitness | Macro F1 | # Features |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **lower_beta** | 20 | 30 | 1.0 | **1.0** | 0.2 | **0.2992** | 0.2571 | 41 |
+| faster_evaporation | 20 | 30 | 1.0 | 2.0 | **0.4** | 0.2921 | 0.2092 | 29 |
+| more_ants | **40** | 30 | 1.0 | 2.0 | 0.2 | 0.2909 | 0.2305 | 36 |
+| baseline | 20 | 30 | 1.0 | 2.0 | 0.2 | 0.2854 | 0.2399 | 41 |
+| more_iterations | 20 | **60** | 1.0 | 2.0 | 0.2 | 0.2854 | 0.2399 | 41 |
+| higher_alpha | 20 | 30 | **2.0** | 2.0 | 0.2 | 0.2833 | 0.2178 | 35 |
+| slower_evaporation | 20 | 30 | 1.0 | 2.0 | **0.1** | 0.2833 | 0.2178 | 35 |
+
+**Finding**: lowering `beta` from 2.0 to 1.0 (reducing MI-heuristic influence,
+increasing relative weight of pheromone/learned experience) produced the
+largest single improvement of any tested change — larger than doubling ant
+count or doubling iterations. This suggests the raw MI ranking, while a
+reasonable starting heuristic, was somewhat over-constraining the search;
+letting the colony's own learning carry more relative weight found better
+subsets.
+
+### Full-scale confirmation (lower_beta config, 1,000,000-row sample)
+
+Re-ran the winning config at the canonical 1M-row scale:
+- `global_best` climbed across iterations 1-4 (0.2931 -> 0.3012 -> 0.3038 ->
+  0.3045), then plateaued for the remaining 26 iterations without further
+  improvement
+- Final: 35/77 features, fitness 0.3045, macro F1 0.2443
+
+**Comparison to Day 8's un-tuned result** (0.3073, set at iteration 1, never
+improved thereafter): tuning changed *how* convergence happens — genuine
+multi-iteration improvement (iterations 1-4) instead of a single early spike
+— but the final fitness (0.3045) is marginally *below* Day 8's original best
+(0.3073). This is an honest, non-clean-win result: beta=1.0 improved the
+*search dynamics* (visible learning over iterations, better average fitness
+across the population) without improving the *single best subset found*, at
+least within 30 iterations. A longer run (60+ iterations) with beta=1.0,
+not yet tested at full scale due to time cost, is a natural next experiment
+if further tuning were pursued.
+
+### Rare-class handling during tuning
+
+At the 100,000-row tuning sample size, 2 classes (Heartbleed, and one other
+ultra-rare class) had fewer than 2 examples in the drawn subsample and were
+automatically dropped from that experiment's fitness evaluation (see
+`load_fitness_data`'s rare-class guard in `ml/aco.py`). This only affects
+ACO's internal fitness signal during the tuning sweep — the final 1M-row run
+and all downstream model training (Day 10+) use the full class set.
+
+### Selected feature subset (final, post-tuning)
+
+`reports/selected_features.csv` — 35 features, superseding Day 8's 30-feature
+result. Will be compared against the Day 4 full-feature baseline (78/77
+features, accuracy 0.1635) on Day 10.
