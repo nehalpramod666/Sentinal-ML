@@ -28,51 +28,51 @@ Packet Length Variance,0.99
 Fwd Header Length,0.99
 Fwd Packets/s,0.99
 Bwd Header Length,0.99
+Subflow Fwd Packets,0.99
 Subflow Fwd Bytes,0.99
 Subflow Bwd Packets,0.99
 Subflow Bwd Bytes,0.99
 Init_Win_bytes_forward,0.99
-min_seg_size_forward,0.99
 Avg Bwd Segment Size,0.99
-Avg Fwd Segment Size,0.99
+min_seg_size_forward,0.99
 Init_Win_bytes_backward,0.99
+Avg Fwd Segment Size,0.99
 Average Packet Size,0.99
-Subflow Fwd Packets,0.6528221974467595
-Bwd IAT Total,0.3938351122227927
-Bwd IAT Mean,0.2716665191420931
-Total Fwd Packets,0.09882255024556559
-Bwd Packet Length Min,0.04467325997394428
-Idle Max,0.021927275359410525
-Active Max,0.02180481165506319
-Bwd IAT Std,0.01405826064345803
-Active Min,0.01200289372414215
-Down/Up Ratio,0.010749805648112046
-Fwd Packet Length Min,0.01
+Bwd IAT Mean,0.8707175608574098
+Bwd IAT Total,0.7060250206998993
+Total Fwd Packets,0.572979302002078
+Bwd Packet Length Min,0.4078482185288055
+Idle Max,0.35414895309224476
+Fwd IAT Min,0.2029940119732319
+Bwd IAT Std,0.18486981486010354
+Down/Up Ratio,0.1795069853446718
+Idle Min,0.1747306099428828
+Active Min,0.1680952476689721
+Idle Mean,0.15020871502225647
+Min Packet Length,0.11647364440295056
+Fwd Packet Length Min,0.09467605415531982
+Bwd IAT Min,0.08500027865092225
+Flow IAT Min,0.03889697426840315
+Active Max,0.03705430732881175
+act_data_pkt_fwd,0.03502080370207869
+Active Mean,0.0289431313523927
+PSH Flag Count,0.010671860822083296
+Bwd PSH Flags,0.01
+Fwd URG Flags,0.01
+Bwd URG Flags,0.01
 SYN Flag Count,0.01
 FIN Flag Count,0.01
 Fwd PSH Flags,0.01
-Bwd URG Flags,0.01
-Flow IAT Min,0.01
-Fwd IAT Min,0.01
-Min Packet Length,0.01
-Bwd IAT Min,0.01
-Fwd URG Flags,0.01
-Bwd PSH Flags,0.01
-URG Flag Count,0.01
-ACK Flag Count,0.01
+Bwd Avg Bytes/Bulk,0.01
 Bwd Avg Bulk Rate,0.01
 Bwd Avg Packets/Bulk,0.01
-Bwd Avg Bytes/Bulk,0.01
+ECE Flag Count,0.01
+CWE Flag Count,0.01
+RST Flag Count,0.01
+URG Flag Count,0.01
+ACK Flag Count,0.01
 Fwd Avg Bulk Rate,0.01
 Fwd Avg Packets/Bulk,0.01
 Fwd Avg Bytes/Bulk,0.01
-ECE Flag Count,0.01
-CWE Flag Count,0.01
-PSH Flag Count,0.01
-RST Flag Count,0.01
-act_data_pkt_fwd,0.01
 Active Std,0.01
-Active Mean,0.01
-Idle Mean,0.01
 Idle Std,0.01
-Idle Min,0.01
