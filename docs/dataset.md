@@ -344,3 +344,58 @@ Traffic density's amplifying effect is visible in the "ambiguous prediction"
 pair: identical probability/confidence, but heavy traffic pushes Medium vs.
 light traffic staying Low — matching the intended design where high-volume
 ambiguous traffic warrants more scrutiny than low-volume ambiguous traffic.
+## Fuzzy-model integration (Day 12)
+
+Trained the final GaussianNB model on ACO's 35 selected features (full
+training set) and saved it (`models/model.pkl`, `models/model_metadata.json`).
+Built `fuzzy/integration.py`, running real test-set predictions through the
+corrected P(attack) calculation, confidence margin, and normalized traffic
+density into Day 11's fuzzy engine end-to-end. Sample output:
+`reports/fuzzy_integration_sample.csv` (84 stratified rows).
+
+**Pipeline correctness verified**: risk scores traced by hand against the
+27-rule scoring table match exactly (e.g. prob_attack=high + confidence=high
++ density=low -> score 4 -> "High", 71.06 — the modal outcome across the
+sample). No plumbing errors.
+
+**Finding: GaussianNB's predict_proba is nearly saturated (binary) on this
+dataset.** Across the 84-row sample, `prob_attack` = P(attack) = 1-P(BENIGN)
+was almost always exactly 0.0000 or 1.0000, with only a handful of
+intermediate values (e.g. 0.0379). This is a known Naive Bayes pathology:
+because NB computes the joint likelihood as a *product* of per-feature
+likelihoods (the "naive" independence assumption), even mild per-feature
+signal compounds multiplicatively across 35 features into near-total
+certainty at the joint posterior level — regardless of whether that
+certainty is actually warranted. This is consistent with, and likely
+compounded by, the extreme feature-scale disparity documented in Day 5's
+EDA (features spanning single digits to tens of millions).
+
+**Practical consequence**: in the current fuzzy system, `confidence` (the
+top-1/top-2 margin) carries most of the real differentiating signal between
+risk levels, since `probability` behaves close to a binary switch rather
+than the graded estimate it was designed to be. `traffic_density` still
+functions as designed (the amplifying effect from Day 11 is visible: e.g.
+identical prob_attack and confidence, but density=1.0 pushing risk from
+High to Critical in the FTP-Patator and DoS Slowhttptest rows).
+
+**Not fixed in this pass** — flagged as a known limitation and candidate for
+future work: NB probability calibration (e.g. Platt scaling / isotonic
+regression via `CalibratedClassifierCV`) could produce smoother, better-
+calibrated probability estimates without changing the underlying
+classification decisions. Out of scope for the current 4-week timeline, but
+worth noting explicitly rather than presenting `prob_attack` as more
+nuanced than it actually is.
+
+### Risk level vs. true traffic type (84-row sample)
+
+| True type | Critical | High | Medium |
+|---|---:|---:|---:|
+| BENIGN | 0 | 5 | 1 |
+| Attack | 2 | 70 | 6 |
+
+Consistent with Day 10's finding: real BENIGN traffic is frequently flagged
+High risk (5 of 6 BENIGN rows in this sample), reflecting the underlying
+model's known BENIGN-recall weakness flowing through the fuzzy layer
+faithfully rather than being corrected by it — fuzzy inference reshapes a
+prediction into a graded, actionable signal, but it cannot fix errors in
+the underlying prediction itself.

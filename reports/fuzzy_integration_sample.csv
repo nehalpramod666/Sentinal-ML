@@ -1,0 +1,85 @@
+predicted_label,true_label,prob_attack,confidence,traffic_density,risk_score,risk_level,true_is_attack
+Web Attack - XSS,Web Attack - Brute Force,1.0,0.9393,0.0,71.06,High,True
+FTP-Patator,BENIGN,1.0,0.9913,0.0134,71.06,High,False
+FTP-Patator,PortScan,1.0,0.968,0.0382,71.06,High,True
+DoS GoldenEye,DoS GoldenEye,1.0,0.9999,0.0,71.06,High,True
+DDoS,DDoS,1.0,1.0,0.0031,71.06,High,True
+Web Attack - Brute Force,Web Attack - Brute Force,1.0,0.9278,0.0,71.06,High,True
+PortScan,Bot,1.0,0.6915,0.0135,68.85,High,True
+DoS GoldenEye,DoS GoldenEye,1.0,1.0,0.0001,71.06,High,True
+FTP-Patator,BENIGN,1.0,0.997,0.0425,71.06,High,False
+SSH-Patator,SSH-Patator,1.0,0.9651,0.0,71.06,High,True
+DoS GoldenEye,DoS slowloris,1.0,0.9982,0.0,71.06,High,True
+FTP-Patator,FTP-Patator,1.0,1.0,1.0,92.22,Critical,True
+BENIGN,DoS Slowhttptest,0.0379,0.9242,1.0,71.06,High,True
+Web Attack - XSS,Web Attack - XSS,1.0,0.9389,0.0,71.06,High,True
+DoS slowloris,Infiltration,1.0,0.4498,0.0,42.5,Medium,True
+DoS slowloris,Infiltration,1.0,0.9961,0.0,71.06,High,True
+DoS slowloris,DoS Slowhttptest,1.0,0.9995,0.0,71.06,High,True
+SSH-Patator,Web Attack - SQL Injection,1.0,0.9791,0.0,71.06,High,True
+FTP-Patator,FTP-Patator,1.0,0.5787,0.0,47.38,Medium,True
+Heartbleed,Heartbleed,1.0,1.0,0.0054,71.06,High,True
+PortScan,Bot,1.0,0.9706,0.0003,71.06,High,True
+DoS slowloris,DoS Slowhttptest,1.0,0.9995,0.0,71.06,High,True
+DoS slowloris,DoS slowloris,1.0,0.9974,0.0,71.06,High,True
+DoS Hulk,DoS Hulk,1.0,1.0,0.0,71.06,High,True
+PortScan,Bot,1.0,0.4377,0.0811,42.5,Medium,True
+Web Attack - XSS,Web Attack - Brute Force,1.0,0.9422,0.0,71.06,High,True
+FTP-Patator,BENIGN,1.0,0.9881,0.016,71.06,High,False
+FTP-Patator,FTP-Patator,1.0,0.9963,0.005,71.06,High,True
+Web Attack - Brute Force,DoS Slowhttptest,1.0,1.0,0.0,71.06,High,True
+DoS Slowhttptest,DoS Slowhttptest,1.0,0.9713,0.0,71.06,High,True
+FTP-Patator,FTP-Patator,1.0,0.8983,0.0,71.06,High,True
+Web Attack - Brute Force,Web Attack - XSS,1.0,0.9945,0.0,71.06,High,True
+DDoS,DDoS,1.0,0.973,0.0,71.06,High,True
+SSH-Patator,SSH-Patator,1.0,0.9805,0.0,71.06,High,True
+PortScan,Bot,1.0,0.9834,0.0003,71.06,High,True
+SSH-Patator,SSH-Patator,1.0,0.9785,0.0,71.06,High,True
+FTP-Patator,PortScan,1.0,0.9881,0.0138,71.06,High,True
+DoS GoldenEye,DoS GoldenEye,1.0,1.0,0.0001,71.06,High,True
+Web Attack - XSS,Web Attack - Brute Force,1.0,0.932,0.0,71.06,High,True
+FTP-Patator,DoS Hulk,1.0,1.0,0.0,71.06,High,True
+FTP-Patator,Infiltration,1.0,0.9972,0.0486,71.06,High,True
+DDoS,DDoS,1.0,1.0,0.0087,71.06,High,True
+SSH-Patator,SSH-Patator,1.0,0.9806,0.0,71.06,High,True
+FTP-Patator,BENIGN,1.0,0.9939,0.0254,71.06,High,False
+DDoS,DDoS,1.0,1.0,0.0084,71.06,High,True
+DoS GoldenEye,DoS slowloris,1.0,0.9982,0.0,71.06,High,True
+PortScan,Bot,1.0,0.9995,0.0695,71.06,High,True
+SSH-Patator,SSH-Patator,1.0,0.9796,0.0,71.06,High,True
+PortScan,Bot,1.0,0.9997,0.0,71.06,High,True
+DoS slowloris,DoS slowloris,1.0,1.0,0.0,71.06,High,True
+SSH-Patator,Web Attack - SQL Injection,1.0,0.965,0.0,71.06,High,True
+FTP-Patator,PortScan,1.0,0.9941,0.0111,71.06,High,True
+Infiltration,Infiltration,1.0,0.9999,0.0,71.06,High,True
+FTP-Patator,FTP-Patator,1.0,0.7613,0.0,71.06,High,True
+Web Attack - XSS,Web Attack - XSS,1.0,0.9362,0.0,71.06,High,True
+Web Attack - Brute Force,DDoS,1.0,0.9705,0.0,71.06,High,True
+DoS Hulk,DoS Hulk,1.0,1.0,0.0,71.06,High,True
+PortScan,DoS slowloris,1.0,0.9892,0.008,71.06,High,True
+SSH-Patator,DoS Hulk,1.0,0.9777,0.0,71.06,High,True
+BENIGN,Heartbleed,0.0,1.0,0.0054,42.5,Medium,True
+FTP-Patator,DoS Hulk,1.0,1.0,0.0,71.06,High,True
+FTP-Patator,FTP-Patator,1.0,0.7924,0.0,71.06,High,True
+Web Attack - XSS,Web Attack - XSS,1.0,0.9376,0.0,71.06,High,True
+SSH-Patator,Web Attack - SQL Injection,1.0,0.9793,0.0,71.06,High,True
+PortScan,PortScan,1.0,1.0,0.0074,71.06,High,True
+DoS Slowhttptest,DoS Slowhttptest,1.0,1.0,1.0,92.22,Critical,True
+Web Attack - XSS,Web Attack - XSS,1.0,0.9391,0.0,71.06,High,True
+FTP-Patator,PortScan,1.0,0.9806,0.009,71.06,High,True
+SSH-Patator,SSH-Patator,1.0,1.0,0.0,71.06,High,True
+Web Attack - XSS,Web Attack - Brute Force,1.0,0.9389,0.0,71.06,High,True
+DoS slowloris,DoS slowloris,1.0,0.3307,0.0,42.5,Medium,True
+DoS Hulk,DoS Hulk,1.0,1.0,0.0,71.06,High,True
+Web Attack - SQL Injection,BENIGN,1.0,0.926,0.0001,71.06,High,False
+BENIGN,Infiltration,0.0,1.0,0.0,42.5,Medium,True
+Web Attack - SQL Injection,DoS GoldenEye,1.0,1.0,0.0001,71.06,High,True
+BENIGN,BENIGN,0.0,1.0,0.0,42.5,Medium,False
+DoS GoldenEye,DoS GoldenEye,1.0,1.0,0.0001,71.06,High,True
+Web Attack - XSS,Web Attack - XSS,1.0,0.9418,0.0,71.06,High,True
+Web Attack - SQL Injection,Web Attack - SQL Injection,1.0,0.6778,0.0,65.83,High,True
+DoS GoldenEye,DoS GoldenEye,1.0,1.0,0.0002,71.06,High,True
+PortScan,PortScan,1.0,0.9999,0.0147,71.06,High,True
+Web Attack - XSS,Web Attack - Brute Force,1.0,0.9417,0.0,71.06,High,True
+DDoS,DDoS,1.0,1.0,0.0005,71.06,High,True
+DoS slowloris,Infiltration,1.0,0.9994,0.0,71.06,High,True
