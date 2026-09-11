@@ -304,3 +304,43 @@ on a single classifier's unreliable hard decision boundary, converting
 prediction probabilities into graded risk levels (Low/Medium/High/Critical)
 provides a more honest and actionable signal precisely in the regime where
 GaussianNB's binary-ish classification is this unreliable.
+
+## Fuzzy risk inference engine (Day 11)
+
+Implemented `fuzzy/engine.py`: a Mamdani fuzzy inference system combining
+three inputs (probability, confidence, traffic_density) into a risk score
+(0-100) and categorical level (Low/Medium/High/Critical).
+
+**Bug found and fixed — incomplete rule coverage**: the initial hand-written
+16-rule set left gaps in the 27-combination input space (3 terms x 3
+variables); specifically, `probability=medium & confidence=low &
+traffic_density=high` had no matching rule, causing `sim.output` to be
+empty for that input region (`KeyError: 'risk'`). Fixed by generating all
+27 rules programmatically via an additive scoring scheme (low=0, medium=1,
+high=2 per input; summed score maps to output level), guaranteeing complete
+coverage by construction rather than relying on manually enumerating every
+case.
+
+**Design limitation found via scenario testing**: using P(top class) as the
+`probability` input produced backwards results — a confident, high-probability
+BENIGN prediction scored as High risk, identical to a confident attack
+prediction, since both have high probability and high confidence regardless
+of which class was predicted. Fixed by redefining `probability` as
+`P(attack) = 1 - P(BENIGN)`, directly encoding attack-likelihood rather than
+raw prediction strength. This will be computed from real model output on
+Day 12.
+
+Sanity-check scenarios (synthetic inputs, `python -m fuzzy.engine`):
+
+| Scenario | Prob | Conf | Density | Score | Level |
+|---|---:|---:|---:|---:|---|
+| Confident attack, heavy traffic | 0.95 | 0.90 | 0.90 | 92.22 | Critical |
+| Confident attack, light traffic | 0.95 | 0.90 | 0.10 | 71.06 | High |
+| Ambiguous prediction, heavy traffic | 0.55 | 0.20 | 0.85 | 42.50 | Medium |
+| Ambiguous prediction, light traffic | 0.55 | 0.20 | 0.15 | 14.09 | Low |
+| Everything moderate | 0.50 | 0.50 | 0.50 | 42.50 | Medium |
+
+Traffic density's amplifying effect is visible in the "ambiguous prediction"
+pair: identical probability/confidence, but heavy traffic pushes Medium vs.
+light traffic staying Low — matching the intended design where high-volume
+ambiguous traffic warrants more scrutiny than low-volume ambiguous traffic.
