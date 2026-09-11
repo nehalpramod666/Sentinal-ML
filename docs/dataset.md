@@ -399,3 +399,53 @@ model's known BENIGN-recall weakness flowing through the fuzzy layer
 faithfully rather than being corrected by it — fuzzy inference reshapes a
 prediction into a graded, actionable signal, but it cannot fix errors in
 the underlying prediction itself.
+
+## Fuzzy visualization and distribution analysis (Day 13)
+
+Generated `reports/plots/fuzzy_membership_functions.png` (all 3 input sets
+and the output set, visually confirming the trapezoidal/triangular shapes
+from Day 11's design) and `reports/plots/risk_distribution.png` (risk score
+histogram and risk level counts, from a 1,606-row stratified sample of real
+test data — smaller than the requested 2,000 due to per-class sampling caps
+on rare classes).
+
+### Risk level distribution by true traffic type (1,606-row sample)
+
+| Risk level | True BENIGN (n=133) | True Attack (n=1,473) |
+|---|---:|---:|
+| Low | 1 | 4 |
+| Medium | 18 | 64 |
+| High | 114 | 1,394 |
+| Critical | 0 | 11 |
+
+**Finding: the fuzzy layer shows limited discrimination between BENIGN and
+Attack traffic in its current form.** 86% of true-BENIGN samples (114/133)
+and 95% of true-Attack samples (1,394/1,473) both land in "High" — nearly
+identical distributions across ground-truth classes. This is a direct
+consequence of Day 12's probability-saturation finding: since `prob_attack`
+is almost always exactly 0 or 1 and `confidence` is almost always very
+high (GaussianNB is highly "confident" even on misclassifications), most
+rows land in the same corner of the fuzzy input space
+(`probability=high, confidence=high`), which the rule table maps to "High"
+for most `traffic_density` values.
+
+**Honest interpretation**: this is not a flaw in the fuzzy engine's design
+or rule logic — the membership functions and rule table behave exactly as
+specified (verified in Day 11/12). The limitation is upstream: fuzzy
+inference can only be as discriminating as the inputs it receives, and
+GaussianNB's near-binary, poorly-calibrated probability output doesn't give
+the fuzzy system enough graded signal to work with. The project's fuzzy
+layer successfully demonstrates the *architecture* (probability + confidence
++ density -> graded risk), and traffic_density's amplifying effect remains
+visible (the 11 Critical cases are exactly the high-density rows from
+Day 12's spot-check), but achieving genuinely differentiated, actionable
+risk levels in practice would require addressing NB's probability
+calibration first (see Day 12's noted future-work item: Platt
+scaling/isotonic regression via `CalibratedClassifierCV`).
+
+This is a legitimate and valuable finding for the project write-up: it
+demonstrates the full pipeline is correctly implemented end-to-end, while
+also surfacing a real, specific, and well-understood limitation with a
+concrete, named path to improving it — a stronger and more credible result
+than an inflated claim that fuzzy scoring "solved" the classification
+problem.
