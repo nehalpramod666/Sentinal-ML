@@ -472,3 +472,21 @@ the project, not a parallel reimplementation that could silently drift.
 
 Interactive API docs available at `/docs` (FastAPI's auto-generated Swagger
 UI) once the server is running.
+
+## Dockerized API (Day 16)
+
+Containerized the FastAPI service (`Dockerfile`, `docker-compose.yml`,
+`.dockerignore`). Model artifacts (`models/`) and data (`data/`) are
+excluded from the Docker build context and image — instead mounted at
+runtime via `docker-compose`'s volume mapping (`./models:/app/models`).
+This keeps the image reproducible from source alone (no accidental
+dependency on locally-generated artifacts baked into the image) while still
+giving the running container access to the trained model.
+
+Build: `docker-compose up --build` — first build ~2 minutes (mostly
+`pip install` of the full `requirements.txt` inside the fresh container).
+Verified working: container starts, loads the model (`Model loaded: 35
+features`), and `scripts/test_api.py`'s correctness check
+(direct-computation vs. API-response comparison) passes identically against
+the containerized API as it did against the local `uvicorn` instance —
+confirming no behavioral drift between local and containerized execution.
