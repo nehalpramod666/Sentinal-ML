@@ -449,3 +449,26 @@ also surfacing a real, specific, and well-understood limitation with a
 concrete, named path to improving it — a stronger and more credible result
 than an inflated claim that fuzzy scoring "solved" the classification
 problem.
+
+## FastAPI inference service (Day 15)
+
+Built `api/main.py` (FastAPI app) and `api/schemas.py` (Pydantic
+request/response models), exposing three endpoints:
+
+- `GET /health` — returns `{"status": "ok", "model_loaded": true}`
+- `GET /model-info` — returns the 35 ACO-selected feature names, label
+  mapping, and density feature name (so API consumers know exactly what
+  `/predict` expects without reading source code)
+- `POST /predict` — accepts a `{"features": {...}}` payload with all 35
+  ACO-selected feature values, returns predicted label, prob_attack,
+  confidence, traffic_density, risk_score, and risk_level
+
+**Verified correct, not just running**: `scripts/test_api.py` posts a real
+test-set row to the live API and compares the result field-by-field against
+`fuzzy.integration.score_row()`'s direct computation for the same input —
+all 6 output fields matched exactly (PASS). This confirms `/predict` is a
+faithful HTTP wrapper around the same tested scoring logic used throughout
+the project, not a parallel reimplementation that could silently drift.
+
+Interactive API docs available at `/docs` (FastAPI's auto-generated Swagger
+UI) once the server is running.
