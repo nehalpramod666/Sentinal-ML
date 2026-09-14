@@ -490,3 +490,24 @@ features`), and `scripts/test_api.py`'s correctness check
 (direct-computation vs. API-response comparison) passes identically against
 the containerized API as it did against the local `uvicorn` instance —
 confirming no behavioral drift between local and containerized execution.
+## MLflow experiment tracking (Day 17)
+
+Built `ml/mlflow_tracking.py`, logging the final model's ACO hyperparameters,
+performance metrics (accuracy, precision/recall/F1, ROC AUC, train/inference
+time, plus explicit deltas vs. the Day 4 baseline), tags, and 7 key
+artifacts (feature rankings, tuning results, plots) to MLflow, then
+registering the trained model in MLflow's model registry
+(`sentinelml-gaussiannb-aco`).
+
+**Backend note**: switched from MLflow's file-based tracking store
+(`./mlruns`) to a SQLite backend (`sqlite:///mlflow.db`) after discovering
+the file store is in maintenance mode in current MLflow versions and the
+model registry's reliability under the file store is not guaranteed —
+relevant since Day 21 depends on querying the registry programmatically.
+`mlflow.db` is gitignored (regenerable local tracking data, same category
+as `mlruns/` was).
+
+Verified working via the MLflow UI (`mlflow ui --backend-store-uri
+sqlite:///mlflow.db`): run appears with correct status (Finished), tags,
+git commit/branch auto-capture, and the registered model is queryable under
+"Model registry."
