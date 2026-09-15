@@ -22,7 +22,7 @@ import requests
 
 from fuzzy.integration import load_model_and_metadata, score_row
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://127.0.0.1:8080"
 PROCESSES_DIR = Path("data/processed")
 
 
