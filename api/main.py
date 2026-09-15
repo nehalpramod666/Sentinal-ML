@@ -1,27 +1,31 @@
 """
-Day 15 — FastAPI inference service.
+Day 19 — FastAPI inference service.
 
-Wraps the trained model (Day 12) and fuzzy engine (Day 11-13) behind three
-endpoints: /health, /model-info, /predict. Reuses fuzzy.integration's
-scoring logic directly rather than duplicating it, so the API and the
-standalone scripts always agree on how a prediction becomes a risk score.
-
-Run from the project root:
-    uvicorn api.main:app --reload
-Then visit http://127.0.0.1:8000/docs for interactive Swagger UI.
+Wraps the trained model and fuzzy engine behind /health, /model-info,
+and /predict. Includes input validation, structured logging,
+request timing, and global error handling.
 """
 
 import json
+import logging
+import time
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 
 from api.schemas import HealthResponse, ModelInfoResponse, PredictRequest, PredictResponse
 from fuzzy.engine import compute_risk
 from fuzzy.integration import compute_traffic_density
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger("sentinelml.api")
 
 MODELS_DIR = Path("models")
 
@@ -61,14 +65,29 @@ def model_info():
     )
 
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc):
+    """Catch anything not already handled as an HTTPException, log it with
+    full detail server-side, but return a generic message to the client —
+    never leak internal stack traces or implementation details externally."""
+    logger.error(f"Unhandled exception on {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error. Check server logs for details."},
+    )
+
+
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest):
+    start_time = time.time()
+
     if _model is None or _metadata is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     selected_features = _metadata["selected_features"]
     missing = [f for f in selected_features if f not in request.features]
     if missing:
+        logger.warning(f"Predict request rejected: missing features {missing}")
         raise HTTPException(
             status_code=422,
             detail=f"Missing required features: {missing}. See GET /model-info for the full list.",
@@ -96,6 +115,12 @@ def predict(request: PredictRequest):
     )
 
     risk_score, risk_level = compute_risk(prob_attack, confidence, density)
+
+    elapsed_ms = (time.time() - start_time) * 1000
+    logger.info(
+        f"Predict: label={predicted_label} risk={risk_level} "
+        f"score={risk_score:.2f} elapsed_ms={elapsed_ms:.1f}"
+    )
 
     return PredictResponse(
         predicted_label=predicted_label,

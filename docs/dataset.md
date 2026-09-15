@@ -511,3 +511,36 @@ Verified working via the MLflow UI (`mlflow ui --backend-store-uri
 sqlite:///mlflow.db`): run appears with correct status (Finished), tags,
 git commit/branch auto-capture, and the registered model is queryable under
 "Model registry."
+
+## API hardening (Day 19)
+
+Extended the Day 15 API with:
+
+- **Input validation**: added a custom `field_validator` rejecting feature
+  values with absolute value > 1e15 (implausible for any real flow
+  statistic per Day 5's EDA, where even the most extreme legitimate values
+  topped out around 1e8-1e9). Verified: a request with `1e20` returns a
+  clean `422` with the specific offending feature and value named in the
+  error message. Type validation (e.g. rejecting non-numeric strings) was
+  already handled automatically by Pydantic's `dict[str, float]` typing —
+  confirmed via testing before adding any custom logic, avoiding redundant
+  validation code.
+- **Structured logging**: added a named logger (`sentinelml.api`) with
+  timestamped, leveled output. `/predict` now logs the predicted label,
+  risk level, risk score, and elapsed time in milliseconds per request;
+  rejected requests (missing features) log a warning. Verified via a real
+  request showing `Predict: label=FTP-Patator risk=High score=71.06
+  elapsed_ms=54.8` in the server console.
+- **Global exception handler**: any unhandled exception now logs full
+  detail (with stack trace) server-side via `logger.error(..., exc_info=True)`
+  but returns a generic `{"detail": "Internal server error..."}` message to
+  the client — preventing internal implementation details or stack traces
+  from leaking externally, while preserving full debuggability server-side.
+
+**Note on local dev environment**: port 8000 is blocked on this machine by
+a Windows/WSL2 Hyper-V port exclusion range (confirmed via `netsh interface
+ipv4 show excludedportrange protocol=tcp`), unrelated to the project code.
+Local development uses port 8080 instead (`uvicorn api.main:app --reload
+--port 8080`); `docker-compose.yml`'s port 8000 mapping is unaffected since
+Docker's networking doesn't go through the same Windows port-reservation
+mechanism.
