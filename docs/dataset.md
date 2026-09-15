@@ -590,3 +590,44 @@ sentinalml-gaussiannb-aco v2`; `/model-info` correctly reported
 correctness check still passed identically, confirming the
 registry-loaded model produces the same predictions as the
 previously file-loaded one.
+
+## MCP server (Day 22)
+
+Built `mcp_server/server.py` (renamed from `mcp/` to avoid a naming
+collision with the installed `mcp` pip package — a local package sharing
+its name with an installed dependency causes ambiguous import resolution),
+exposing 5 tools via FastMCP: `get_model_metrics`, `get_selected_features`,
+`get_latest_experiment`, `get_deployment_status`, `get_dataset_info`.
+Verified working end-to-end using the MCP Inspector (`mcp dev
+mcp_server/server.py`, connected via `python mcp_server/server.py` — not
+the inspector's default `uv` launcher, which wasn't installed).
+
+**Bugs found and fixed during testing**:
+1. `get_latest_experiment` initially queried the wrong experiment name
+   (`sentinelml-intrusion-detection`, an "e" typo — the real experiment,
+   set in `ml/mlflow_tracking.py`, is `sentinalml-intrusion-detection`
+   with an "a", matching the project's actual naming). Fixed.
+2. A `startswith` typo (`startwith`) caused a tool-execution error on the
+   tags-filtering line. Fixed.
+3. `get_dataset_info` originally read `train.csv`/`test.csv` directly to
+   report row counts, timing out (2.26M-row CSV reads are too slow for an
+   interactive query tool). Fixed by reusing row counts already saved in
+   `reports/aco_model_results.json` from Day 10, rather than re-reading
+   raw data.
+4. **Stale `aco_summary.json` discovered via `get_latest_experiment`**:
+   Day 9's `ml/aco_tuning.py` overwrites `selected_features.csv`,
+   `aco_history.csv`, and `aco_pheromone_final.csv` with the tuned result,
+   but never regenerated `aco_summary.json` — that file silently retained
+   Day 8's untuned values (30 features, beta=2.0) ever since. Day 17's
+   MLflow logging pulled parameters from this stale file, so the MLflow
+   record's *params* (30 features, beta=2.0) didn't match the actual
+   deployed model's real configuration (35 features, beta=1.0) — even
+   though the *metrics* were correct, since those came from a different,
+   correctly-updated file (`aco_model_results.json`). This inconsistency
+   was invisible until an MCP tool surfaced the raw params for direct
+   inspection, which is itself a good demonstration of why natural-language
+   queryable metadata is useful: it surfaces exactly this kind of silent
+   drift between related artifacts. Fixed `ml/aco_tuning.py` to also
+   overwrite `aco_summary.json` with the tuned config; hand-corrected the
+   existing stale file and re-logged a corrected MLflow run (v3 in the
+   model registry) to fix the historical record.
