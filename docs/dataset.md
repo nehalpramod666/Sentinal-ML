@@ -569,3 +569,24 @@ correctly showed `request_counts: {"/": 1, "/health": 1, "/predict": 1}`,
 `risk_level_counts: {"High": 1}` matching the actual prediction's risk
 level — confirming the counters track real request data accurately, not
 placeholder values.
+
+## Model registry automation (Day 21)
+
+API startup now queries MLflow's model registry (`sentinalml-gaussiannb-aco`)
+for the latest registered version and loads it via `mlflow.sklearn.load_model`,
+instead of a hardcoded `models/model.pkl` path. Falls back to the local file
+with a logged warning if the registry is unavailable (e.g. `mlflow.db`
+missing on a fresh clone), so the API remains runnable without requiring
+MLflow tracking to be set up first.
+
+`GET /model-info` now reports `model_source` (`"mlflow_registry"` or
+`"local_file"`) and `model_version`, making it visible to any API consumer
+exactly which model is serving predictions — useful for confirming a
+deployment picked up an intended model update.
+
+Verified: startup log showed `Model loaded from MLflow registry:
+sentinalml-gaussiannb-aco v2`; `/model-info` correctly reported
+`model_source: mlflow_registry`, `model_version: 2`; `scripts/test_api.py`'s
+correctness check still passed identically, confirming the
+registry-loaded model produces the same predictions as the
+previously file-loaded one.
