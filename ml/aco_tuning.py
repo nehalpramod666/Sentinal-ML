@@ -11,6 +11,7 @@ Run from the project root:
     python -m ml.aco_tuning
 """
 
+import json
 import time
 from pathlib import Path
 
@@ -153,6 +154,16 @@ def main():
     ).sort_values("final_pheromone", ascending=False).to_csv(
         REPORTS_DIR / "aco_pheromone_final.csv", index=False
     )
+
+    final_summary = {
+        "n_features_total": len(final_result["feature_names"]),
+        "n_features_selected": len(selected_features),
+        "best_fitness": round(float(final_result["best_fitness"]), 4),
+        "best_macro_f1": round(float(final_result["best_macro_f1"]), 4),
+        "config": vars(final_config),
+    }
+    (REPORTS_DIR / "aco_summary.json").write_text(json.dumps(final_summary, indent=2))
+    print("Overwrote: reports/aco_summary.json with the tuned, full-scale config.")
 
     print("\nOverwrote: reports/selected_features.csv, aco_history.csv, aco_pheromone_final.csv")
     print("with the tuned, full-scale result.")
