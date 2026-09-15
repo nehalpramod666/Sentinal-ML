@@ -15,14 +15,20 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import joblib
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from mlflow.tracking import MlflowClient
 
 from api.schemas import HealthResponse, ModelInfoResponse, PredictRequest, PredictResponse
 from fuzzy.engine import compute_risk
 from fuzzy.integration import compute_traffic_density
+
+MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
+REGISTERED_MODEL_NAME = "sentinalml-gaussiannb-aco"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -90,18 +96,44 @@ app = FastAPI(
 
 _model = None
 _metadata = None
+_model_source = None
+_model_version = None
+
+
+def load_model_from_registry():
+    """Query MLflow's model registry for the latest registered version and
+    load it. Returns (model, version_string) on success."""
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    client = MlflowClient()
+    versions = client.search_model_versions(f"name='{REGISTERED_MODEL_NAME}'")
+    if not versions:
+        raise ValueError(f"No registered versions found for '{REGISTERED_MODEL_NAME}'")
+
+    latest = max(versions, key=lambda v: int(v.version))
+    model_uri = f"models:/{REGISTERED_MODEL_NAME}/{latest.version}"
+    model = mlflow.sklearn.load_model(model_uri)
+    return model, latest.version
 
 
 @app.on_event("startup")
 def load_model():
-    global _model, _metadata
-
-    _model = joblib.load(MODELS_DIR / "model.pkl")
+    global _model, _metadata, _model_source, _model_version
 
     with open(MODELS_DIR / "model_metadata.json") as f:
         _metadata = json.load(f)
+    try:
+        _model, _model_version = load_model_from_registry()
+        _model_source = "mlflow_registry"
+        print(f"Model loaded from MLflow registry: {REGISTERED_MODEL_NAME} v{_model_version}")
+    except Exception as e:
+        logger.warning(
+            f"Could not load model from MLflow registry ({e}); " f"falling back to model/model.pkl"
+        )
 
-    print(f"Model loaded: {len(_metadata['selected_features'])} features")
+        _model = joblib.load(MODELS_DIR / "model.pkl")
+        _model_source = "local_file"
+        _model_version = "unknown"
+        print("Model loaded from local file: models/model.pkl (fallback)")
 
 
 @app.middleware("http")
@@ -169,16 +201,14 @@ def health():
 @app.get("/model-info", response_model=ModelInfoResponse)
 def model_info():
     if _metadata is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Model not loaded",
-        )
-
+        raise HTTPException(status_code=503, detail="Model not loaded")
     return ModelInfoResponse(
         n_features=len(_metadata["selected_features"]),
         selected_features=_metadata["selected_features"],
         label_mapping={int(k): v for k, v in _metadata["label_mapping"].items()},
         density_feature=_metadata["density_feature"],
+        model_source=_model_source,
+        model_version=str(_model_version),
     )
 
 

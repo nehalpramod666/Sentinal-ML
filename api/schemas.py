@@ -84,3 +84,7 @@ class ModelInfoResponse(BaseModel):
     selected_features: list[str]
     label_mapping: dict[int, str]
     density_feature: str
+    model_source: str = Field(..., description="'mlflow_registry' or 'local_file' (fallback)")
+    model_version: str = Field(
+        ..., description="MLflow registry version, or 'unknown' if loaded from local file"
+    )
