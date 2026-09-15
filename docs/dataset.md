@@ -544,3 +544,28 @@ Local development uses port 8080 instead (`uvicorn api.main:app --reload
 --port 8080`); `docker-compose.yml`'s port 8000 mapping is unaffected since
 Docker's networking doesn't go through the same Windows port-reservation
 mechanism.
+
+## Monitoring (Day 20)
+
+Extended the API with:
+
+- **`/metrics` endpoint**: in-memory JSON metrics (not Prometheus format —
+  appropriately scoped for a project with no external metrics scraper
+  consuming this data). Tracks uptime, per-path request counts, per-path
+  error counts (4xx/5xx), prediction count, average/max prediction latency,
+  and a breakdown of risk levels returned so far.
+- **Request-tracking middleware**: automatically records every request
+  across all endpoints (not just `/predict`, which already had per-request
+  logging from Day 19), removing the need to instrument each endpoint
+  individually.
+- **Refined `/health`**: now runs a real self-test prediction (a zero-vector
+  input through `predict_proba`) rather than only checking the model
+  object is non-None in memory — catches a loaded-but-broken model that a
+  simpler check would miss.
+
+Verified: `/metrics` after one `/health` call and one `/predict` call
+correctly showed `request_counts: {"/": 1, "/health": 1, "/predict": 1}`,
+`predict_count: 1`, real latency (`15.61ms`), and
+`risk_level_counts: {"High": 1}` matching the actual prediction's risk
+level — confirming the counters track real request data accurately, not
+placeholder values.
