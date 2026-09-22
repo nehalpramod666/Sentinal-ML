@@ -631,3 +631,41 @@ the inspector's default `uv` launcher, which wasn't installed).
    overwrite `aco_summary.json` with the tuned config; hand-corrected the
    existing stale file and re-logged a corrected MLflow run (v3 in the
    model registry) to fix the historical record.
+
+## AI assistant hookup (Day 23)
+
+Connected `mcp_server/server.py` to Claude Desktop and tested real
+natural-language queries end-to-end.
+
+**Bug found and fixed — relative path resolution**: the MCP server used
+relative paths (`Path("reports")`, `"sqlite:///mlflow.db"`), which resolved
+correctly under manual testing (`mcp dev mcp_server/server.py`, where the
+terminal's cwd was already the project root) but failed when Claude Desktop
+launched the server itself, since it starts subprocesses from its own
+working directory, not the project folder. All three tested tools
+(`get_model_metrics`, `get_selected_features`, `get_latest_experiment`)
+failed with file-not-found errors on first real-world test. Fixed by
+anchoring all paths to the server file's own location
+(`Path(__file__).resolve().parent.parent`) rather than the process's
+current working directory — a more robust pattern for any MCP server that
+might be launched by an external client rather than run manually.
+
+**Separate infrastructure issue — Claude Desktop MSIX config path**: on
+this Windows machine (MSIX-packaged install), the in-app "Edit Config"
+button and official documentation both point to
+`%APPDATA%\Claude\claude_desktop_config.json`, but the app actually reads
+its MCP server configuration from a virtualized path inside
+`%LOCALAPPDATA%\Packages\Claude_<id>\LocalCache\Roaming\Claude\`. Editing
+only the documented path silently had no effect (no error, no log entry).
+Resolved by adding the `mcpServers` configuration to the virtualized path
+instead. This is a known, documented issue specific to MSIX-packaged
+Windows installs, unrelated to the SentinelML project code.
+
+**Verified working**: asked Claude Desktop *"What is the latest model's
+accuracy and how many features does it use?"* — Claude correctly invoked
+`get_model_metrics` and answered using real project data (accuracy 0.1845,
+35 features, full metric breakdown), and independently identified the
+same class-imbalance-driven low-accuracy/high-ROC-AUC pattern already
+documented in this file's Day 4 findings — a genuine demonstration of the
+natural-language querying capability described in the original project
+brief.

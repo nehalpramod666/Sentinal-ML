@@ -20,11 +20,22 @@ from mlflow.tracking import MlflowClient
 
 from mcp.server.fastmcp import FastMCP
 
-REPORTS_DIR = Path("reports")
-MODELS_DIR = Path("models")
-PROCESSED_DIR = Path("data/processed")
+# Anchor all paths to this file's location, not the process's current
+# working directory. Critical when launched by an external client like
+# Claude Desktop, which starts the server from its own working directory,
+# not the project root — relative paths silently pointed at the wrong
+# location and caused every tool to fail with file-not-found errors when
+# first tested from Claude Desktop (worked fine under `mcp dev`, where the
+# terminal's cwd happened to already be the project root).
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
+REPORTS_DIR = PROJECT_ROOT / "reports"
+MODELS_DIR = PROJECT_ROOT / "models"
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+
+MLFLOW_TRACKING_URI = f"sqlite:///{(PROJECT_ROOT / 'mlflow.db').as_posix()}"
+
+
 REGISTERED_MODEL_NAME = "sentinalml-gaussiannb-aco"
 
 mcp = FastMCP("SentinelML")
