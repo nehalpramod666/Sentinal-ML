@@ -669,3 +669,37 @@ same class-imbalance-driven low-accuracy/high-ROC-AUC pattern already
 documented in this file's Day 4 findings — a genuine demonstration of the
 natural-language querying capability described in the original project
 brief.
+
+## Stress testing (Day 24)
+
+Built `scripts/stress_test.py`: hits `/predict` with real feature payloads
+sampled from `test.csv` at increasing concurrency levels (1/5/20/50 workers,
+100 requests each), measuring throughput and latency percentiles. Full
+results: `reports/stress_test_results.json`.
+
+| Concurrency | Throughput (req/s) | Median (ms) | P95 (ms) | P99 (ms) | Errors |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 39.79 | 29.46 | 40.98 | 49.24 | 0 |
+| 5 | 57.88 | 76.78 | 252.51 | 270.40 | 0 |
+| 20 | 68.98 | 285.92 | 340.62 | 343.60 | 0 |
+| 50 | 61.45 | 753.34 | 951.47 | 975.89 | 2 |
+
+**Finding: the server saturates between concurrency 20 and 50.** Throughput
+increases through concurrency 20 (up to 69 req/s), then *drops* at
+concurrency 50 (61.5 req/s) while median latency increases 26x (29ms ->
+753ms) and the first errors appear (2/100 requests). This is the expected
+signature of a single-process development server (`uvicorn --reload`, one
+event loop) combined with synchronous (`def`, not `async def`) endpoint
+handlers: requests beyond the server's effective concurrency queue up
+rather than running in parallel, so added load increases wait time without
+increasing completed throughput — and can eventually exceed request
+timeouts (the source of the 2 errors at concurrency 50).
+
+**Not a code defect** — a known, expected limitation of the current
+deployment configuration, worth documenting rather than silently
+presenting only the flattering concurrency=1 numbers. **Path to improving
+this** (not implemented, out of current scope): running with multiple
+worker processes (`uvicorn api.main:app --workers 4`) or behind Gunicorn
+with Uvicorn worker classes would allow genuinely parallel request
+handling instead of single-process queueing — a standard production
+deployment pattern for FastAPI that this development setup does not use.
