@@ -703,3 +703,33 @@ worker processes (`uvicorn api.main:app --workers 4`) or behind Gunicorn
 with Uvicorn worker classes would allow genuinely parallel request
 handling instead of single-process queueing — a standard production
 deployment pattern for FastAPI that this development setup does not use.
+
+## Integration testing (Day 25)
+
+Added `tests/test_integration.py`: 11 tests exercising the full chain from
+processed data through the model, fuzzy engine, API, and MCP layers in one
+automated run (skips gracefully if upstream pipeline artifacts aren't
+present, rather than failing confusingly). Key coverage:
+
+- **Feature consistency**: `selected_features.csv` matches the model's
+  actual trained feature set and metadata — directly targets the class of
+  bug found in Day 22 (a stale file describing a different configuration
+  than the deployed model)
+- **Model -> fuzzy pipeline**: `score_row()` produces valid, bounded output
+  on real test data
+- **API integration**: via FastAPI's `TestClient` (no live server needed),
+  covering `/health`, `/model-info`, `/predict` (both valid input and
+  rejected invalid input), and — critically — that `/predict`'s output
+  exactly matches direct `score_row()` computation for the same input
+- **MCP tools**: calls the actual tool functions in-process via FastMCP's
+  `.fn` attribute, exercising the same file-path resolution logic that
+  broke in Day 23 (relative paths failing when launched from a different
+  working directory)
+- **End-to-end consistency**: the single highest-value test — confirms a
+  direct model prediction and a full-API-stack prediction agree exactly
+  for the same input, proving no drift between layers
+
+All 11 tests pass (~9 seconds). Two harmless deprecation warnings noted
+(FastAPI's `on_event` startup handler, a pytest class-fixture pattern) —
+neither affects correctness, left as known minor items rather than fixed,
+since fixing them isn't required for this project's scope.
